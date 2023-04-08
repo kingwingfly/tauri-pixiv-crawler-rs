@@ -6,15 +6,12 @@ use pixiv_crawler::{Crawler, CrawlerTrait};
 
 #[tauri::command]
 fn go(uuid: &str, cookie: &str, path: &str, proxy: &str) {
-    let rt = tokio::runtime::Builder::new_multi_thread()
+    let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
-    rt.block_on(async move {
-        println!("{uuid}");
-        let crawler = Crawler::new(uuid, cookie, proxy, path);
-        crawler.run().await.expect("Failed");
-    });
+    let crawler = Crawler::new(uuid, cookie, proxy, path);
+    rt.block_on(crawler.run());
 }
 
 fn main() {

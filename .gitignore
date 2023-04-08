@@ -26,3 +26,4 @@ dist-ssr
 .DS_Store
 package-lock.json
 src-tauri/Cargo.lock
+bak.rs
