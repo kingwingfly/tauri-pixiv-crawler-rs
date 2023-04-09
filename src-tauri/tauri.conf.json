@@ -11,14 +11,7 @@
     "version": "0.0.1"
   },
   "tauri": {
-    "allowlist": {
-      "fs": {
-        "writeFile": true,
-        "readDir": true,
-        "createDir": true,
-        "exists": true
-      }
-    },
+    "allowlist": {},
     "bundle": {
       "active": true,
       "icon": [
