@@ -13,13 +13,10 @@
   "tauri": {
     "allowlist": {
       "fs": {
-        "all": true,
-        "scope": [
-          "$DOWNLOAD/*"
-        ]
-      },
-      "path": {
-        "all": true
+        "writeFile": true,
+        "readDir": true,
+        "createDir": true,
+        "exists": true
       }
     },
     "bundle": {

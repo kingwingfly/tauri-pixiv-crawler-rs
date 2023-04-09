@@ -1,10 +1,10 @@
 [package]
 name = "pixiv-crawler"
-version = "0.0.0"
+version = "0.0.1"
 description = "A Tauri App"
-authors = ["you"]
+authors = ["20200581@cqu.edu.cn"]
 license = ""
-repository = ""
+repository = "https://github.com/kingwingfly/pixiv-crawler"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,12 +13,11 @@ edition = "2021"
 tauri-build = { version = "1.2", features = [] }
 
 [dependencies]
-tauri = { version = "1.2", features = ["fs-all", "path-all"] }
+tauri = { version = "1.2", features = ["fs-create-dir", "fs-exists", "fs-read-dir", "fs-write-file"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["default"] }
 reqwest = "0.11.16"
-async-trait = "0.1.68"
 once_cell = { version = "*" }
 futures = "0.3"
 
