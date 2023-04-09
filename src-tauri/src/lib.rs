@@ -98,9 +98,12 @@ impl Crawler {
     }
 
     async fn step3(ori_url: String, headers: HeaderMap, proxy: Proxy, path: String) {
-        println!("Doing: {}", ori_url);
         let name = ori_url.split('/').last().unwrap();
         let path = format!("{}/{}", path, name);
+        if fs::try_exists(&path).await.unwrap() {
+            return;
+        }
+        println!("Doing: {}", ori_url);
         loop {
             let client = Client::builder().proxy(proxy.clone()).build().unwrap();
             let resp = match client.get(&ori_url).headers(headers.clone()).send().await {
