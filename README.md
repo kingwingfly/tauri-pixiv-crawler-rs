@@ -110,17 +110,16 @@ And maybe you need this [Tauri Quick Start](https://tauri.app/v1/guides/getting-
 
 _Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
+1. Clone the repo
    ```sh
    git clone https://github.com/kingwingfly/tauri-pixiv-crawler-rs.git
    cd tauri-pixiv-crawler-rs
    ```
-3. Install NPM packages
+2. Install NPM packages
    ```sh
    npm install
    ```
-4. start compile
+3. start compile
    ```sh
    cargo tauri build
    ```
@@ -132,7 +131,7 @@ _Below is an example of how you can instruct your audience on installing and set
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-Maybe can get you cookie through your browser.
+Maybe you can get cookie through your browser.
 
 <img src="images/get_cookie.png" alt="GetCookie" width="400">
 
