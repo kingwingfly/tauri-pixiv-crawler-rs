@@ -120,7 +120,7 @@ impl Crawler {
                 .open(path.clone())
                 .await
                 .unwrap();
-            file.write(&content).await.unwrap();
+            file.write_all(&content).await.unwrap();
             break;
         }
         println!("Done: {}", ori_url);
