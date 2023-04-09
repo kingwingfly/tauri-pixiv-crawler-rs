@@ -64,7 +64,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+[![Product Name Screen Shot][product-screenshot]](https://github.com/kingwingfly/tauri-pixiv-crawler-rs/)
 
 This a Crawler or Downloader for pixiv built by Tauri and Rust.
 
@@ -134,7 +134,8 @@ _Below is an example of how you can instruct your audience on installing and set
 
 Maybe can get you cookie through your browser.
 
-![get_cookie](./images/get_cookie.png)
+<img src="images/get_cookie.png" alt="GetCookie" width="400">
+
 
 You may don't need a proxy, however the proxy is must by v0.0.1 version.
 
