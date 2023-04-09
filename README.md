@@ -204,6 +204,7 @@ Some document may help in develop tauri app and crawler.
 
 * [Tauri Example](https://github.com/tauri-apps/tauri/tree/dev/examples)
 * [Tokio Quick Tutorial](https://tokio.rs/tokio/tutorial)
+* [Rust Reqwest](https://crates.io/crates/reqwest)
 * [Vue Document](https://router.vuejs.org/zh/guide/)
 * [A python Async Pixiv Crawler](https://github.com/kingwingfly/PixivCrawlerAsync)
 * [A python pixiv crawler](https://github.com/CWHer/PixivCrawler)
@@ -235,9 +236,3 @@ Some document may help in develop tauri app and crawler.
 [Tokio-url]: https://tokio.rs
 [Vue.js]: https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
 [Vue-url]: https://vuejs.org/
-[Laravel.com]: https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white
-[Laravel-url]: https://laravel.com
-[Bootstrap.com]: https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white
-[Bootstrap-url]: https://getbootstrap.com
-[JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
-[JQuery-url]: https://jquery.com
