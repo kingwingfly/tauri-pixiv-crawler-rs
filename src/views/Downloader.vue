@@ -25,6 +25,7 @@ async function go() {
     let temp = process.value.split("/");
     if (temp[0] == temp[1] && temp[1] != "0") {
       state.value = "Finished";
+      invoke("interrupt");
       working.value = false;
     }
     await new Promise(f => setTimeout(f, 1000));
