@@ -8,14 +8,15 @@
   },
   "package": {
     "productName": "pixiv-crawler",
-    "version": "0.0.0"
+    "version": "0.0.1"
   },
   "tauri": {
     "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
+      "fs": {
+        "writeFile": true,
+        "readDir": true,
+        "createDir": true,
+        "exists": true
       }
     },
     "bundle": {
@@ -41,8 +42,8 @@
         "fullscreen": false,
         "resizable": true,
         "title": "pixiv-crawler",
-        "width": 800,
-        "height": 600
+        "width": 400,
+        "height": 500
       }
     ]
   }
