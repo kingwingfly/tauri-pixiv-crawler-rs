@@ -106,8 +106,7 @@ You need rust, tauri-cli, npm first.
 
 And maybe you need this [Tauri Quick Start](https://tauri.app/v1/guides/getting-started/setup) for further infomation. 
 
-### Installation
-
+### Compile
 
 1. Clone the repo
    ```sh
