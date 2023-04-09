@@ -70,8 +70,9 @@ init()
       <button type="button" @click="go()">Go</button>
       <button type="button" @click="interrupt()">Interrupt</button>
     </div>
-    <p>{{ state }}</p>
-    <p>{{ process }}</p>
+    <br>
+    <div>{{ state }}</div>
+    <div>{{ process }}</div>
   </div>
 </template>
 
