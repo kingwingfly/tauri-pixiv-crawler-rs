@@ -4,33 +4,36 @@
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 use once_cell::sync::OnceCell;
 use pixiv_crawler::helper;
-use pixiv_crawler::{Crawler, TaskMng};
+use pixiv_crawler::Crawler;
 
-static CRAWLER: OnceCell<Crawler> = OnceCell::new();
-static TASKMNG: OnceCell<TaskMng> = OnceCell::new();
+static mut CRAWLER: OnceCell<Crawler> = OnceCell::new();
 
 #[tauri::command]
-fn go(uuid: &str, cookie: &str, path: &str, proxy: &str) {}
+fn go(uuid: &str, cookie: &str, path: &str, proxy: &str) {
+    let rt = helper::create_rt();
+    unsafe {
+        CRAWLER.take();
+        CRAWLER.get_or_init(|| Crawler::new(uuid, cookie, path, proxy));
+        rt.block_on(CRAWLER.get().unwrap().run());
+    }
+}
 
 #[tauri::command]
 fn interrupt() {
-    CRAWLER.get_or_init(|| Crawler::new());
-    TASKMNG.get_or_init(|| TaskMng::new());
-    TASKMNG
-        .get()
-        .unwrap()
-        .spawn_task(CRAWLER.get().unwrap().run(3));
+    let rt = helper::create_rt();
+    unsafe {
+        rt.block_on(CRAWLER.get().unwrap().shutdown());
+    }
 }
 
 #[tauri::command]
 fn process() -> String {
-    TASKMNG.get().unwrap().process()
+    unsafe { CRAWLER.get().unwrap().process() }
 }
 
 fn main() {
-    interrupt();
-    // tauri::Builder::default()
-    //     .invoke_handler(tauri::generate_handler![go, interrupt, process])
-    //     .run(tauri::generate_context!())
-    //     .expect("error while running tauri application");
+    tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![go, interrupt, process])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
 }
