@@ -3,7 +3,7 @@ use std::pin::Pin;
 use futures::Future;
 use reqwest::{
     header::{self, HeaderMap},
-    Client, Proxy,
+    Proxy,
 };
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -15,18 +15,22 @@ pub struct Crawler {
     uuid: String,
     cookie: String,
     path: String,
-    proxy: Proxy,
+    proxy: Option<Proxy>,
     tk_mng: TaskMng,
 }
 
 impl Crawler {
     pub fn new(uuid: &str, cookie: &str, path: &str, proxy: &str) -> Self {
-        let proxy = Proxy::all(proxy).unwrap();
+        let proxy = Proxy::all(proxy.trim()).ok();
+        let path = match path.trim() {
+            "" => helper::download_dir(),
+            _ => path.trim().to_owned(),
+        };
         let path = format!("{}/{}", path, uuid);
         let tk_mng = TaskMng::new();
         Self {
-            uuid: uuid.into(),
-            cookie: cookie.into(),
+            uuid: uuid.trim().into(),
+            cookie: cookie.trim().into(),
             path,
             proxy,
             tk_mng,
@@ -62,7 +66,7 @@ impl Crawler {
 
     async fn step1(&self) -> Result<Vec<String>, Box<dyn std::error::Error>> {
         let url = self.user_ajax();
-        let client = Client::builder().proxy(self.proxy.clone()).build().unwrap();
+        let client = helper::create_client(self.proxy.clone());
         let resp = client.get(&url).send().await?;
         let content = resp.text().await?;
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
@@ -77,9 +81,9 @@ impl Crawler {
 
     async fn step2(
         illu_ajax: String,
-        proxy: Proxy,
+        proxy: Option<Proxy>,
     ) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-        let client = Client::builder().proxy(proxy).build().unwrap();
+        let client = helper::create_client(proxy);
         let resp = client.get(illu_ajax).send().await?;
         let content = resp.text().await?;
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
@@ -97,7 +101,7 @@ impl Crawler {
         Ok(ori_urls)
     }
 
-    async fn step3(ori_url: String, headers: HeaderMap, proxy: Proxy, path: String) {
+    async fn step3(ori_url: String, headers: HeaderMap, proxy: Option<Proxy>, path: String) {
         let name = ori_url.split('/').last().unwrap();
         let path = format!("{}/{}", path, name);
         if fs::try_exists(&path).await.unwrap() {
@@ -105,7 +109,7 @@ impl Crawler {
         }
         println!("Doing: {}", ori_url);
         loop {
-            let client = Client::builder().proxy(proxy.clone()).build().unwrap();
+            let client = helper::create_client(proxy.clone());
             let resp = match client.get(&ori_url).headers(headers.clone()).send().await {
                 Ok(resp) => resp,
                 Err(_) => continue,
@@ -132,6 +136,10 @@ impl Crawler {
 
     pub fn process(&self) -> String {
         self.tk_mng.process()
+    }
+
+    pub fn save_path(&self) -> String {
+        self.path.clone()
     }
 
     fn user_ajax(&self) -> String {
@@ -236,11 +244,25 @@ impl TaskMng {
 }
 
 pub mod helper {
+    use reqwest::{Client, Proxy};
+    use tauri::api::path;
+
     pub fn create_rt() -> tokio::runtime::Runtime {
         tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
             .unwrap()
+    }
+
+    pub fn create_client(proxy: Option<Proxy>) -> Client {
+        match proxy {
+            Some(proxy) => Client::builder().proxy(proxy).build().unwrap(),
+            None => Client::new(),
+        }
+    }
+
+    pub fn download_dir() -> String {
+        path::download_dir().unwrap().to_str().unwrap().to_owned()
     }
 }
 
