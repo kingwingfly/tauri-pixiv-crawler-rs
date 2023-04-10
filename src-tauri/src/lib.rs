@@ -1,10 +1,10 @@
-use std::pin::Pin;
-
 use futures::Future;
 use reqwest::{
     header::{self, HeaderMap},
     Proxy,
 };
+use serde::{Deserialize, Serialize};
+use std::pin::Pin;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use tokio::fs::{self, OpenOptions};
@@ -35,6 +35,10 @@ impl Crawler {
             proxy,
             tk_mng,
         }
+    }
+
+    pub fn builder() -> CrawlerBuilder {
+        CrawlerBuilder::new()
     }
 
     pub async fn run(&self) {
@@ -70,11 +74,15 @@ impl Crawler {
         let resp = client.get(&url).send().await?;
         let content = resp.text().await?;
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
-        let illus: Vec<String> = v.as_object().unwrap()["body"].as_object().unwrap()["illusts"]
+        let illus: Vec<String> = v
+            .get("body")
+            .unwrap()
+            .get("illusts")
+            .unwrap()
             .as_object()
             .unwrap()
             .keys()
-            .map(|s| s.to_owned())
+            .map(|k| k.to_string())
             .collect();
         Ok(illus)
     }
@@ -87,12 +95,17 @@ impl Crawler {
         let resp = client.get(illu_ajax).send().await?;
         let content = resp.text().await?;
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
-        let ori_urls: Vec<String> = v.as_object().unwrap()["body"]
+        let ori_urls: Vec<String> = v
+            .get("body")
+            .unwrap()
             .as_array()
             .unwrap()
             .iter()
             .map(|i| {
-                i.as_object().unwrap()["urls"].as_object().unwrap()["original"]
+                i.get("urls")
+                    .unwrap()
+                    .get("original")
+                    .unwrap()
                     .as_str()
                     .unwrap()
                     .to_owned()
@@ -164,6 +177,57 @@ impl Crawler {
         );
         headers.append(header::USER_AGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.2 Safari/605.1.15".parse().unwrap());
         headers
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CrawlerBuilder {
+    uuid: Option<String>,
+    cookie: Option<String>,
+    path: Option<String>,
+    proxy: Option<String>,
+}
+
+impl CrawlerBuilder {
+    pub fn new() -> Self {
+        Self {
+            uuid: None,
+            cookie: None,
+            path: None,
+            proxy: None,
+        }
+    }
+
+    pub fn build(self) -> Crawler {
+        let uuid = self.uuid.unwrap();
+        let cookie = self.cookie.unwrap();
+        let path = self.path.unwrap_or("".to_owned());
+        let proxy = self.proxy.unwrap_or("".to_owned());
+        Crawler::new(&uuid, &cookie, &path, &proxy)
+    }
+
+    pub fn uuid(mut self, uuid: &str) -> Self {
+        self.uuid = Some(uuid.trim().to_owned());
+        self
+    }
+
+    pub fn cookie(mut self, cookie: &str) -> Self {
+        self.cookie = Some(cookie.trim().to_owned());
+        self
+    }
+
+    pub fn path(mut self, path: &str) -> Self {
+        let path = match path.trim() {
+            "" => helper::download_dir(),
+            _ => path.trim().to_owned(),
+        };
+        self.path = Some(path.trim().to_owned());
+        self
+    }
+
+    pub fn proxy(mut self, proxy: &str) -> Self {
+        self.proxy = Some(proxy.trim().to_owned());
+        self
     }
 }
 
@@ -244,7 +308,11 @@ impl TaskMng {
 }
 
 pub mod helper {
+    use super::CrawlerBuilder;
     use reqwest::{Client, Proxy};
+    use std::collections::HashMap;
+    use std::fs::{self, OpenOptions};
+    use std::io::{BufReader, Write};
     use tauri::api::path;
 
     pub fn create_rt() -> tokio::runtime::Runtime {
@@ -263,6 +331,52 @@ pub mod helper {
 
     pub fn download_dir() -> String {
         path::download_dir().unwrap().to_str().unwrap().to_owned()
+    }
+
+    fn config_dir() -> std::path::PathBuf {
+        let mut path = path::config_dir().unwrap();
+        path.push("PixivCrawler");
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    pub fn store_builder(builder: &CrawlerBuilder) {
+        let mut path = config_dir();
+        path.push("config.json");
+        let json = serde_json::to_string_pretty(&builder).unwrap();
+        let mut file = OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(path)
+            .unwrap();
+        file.write(json.as_bytes()).unwrap();
+    }
+
+    pub fn get_config() -> HashMap<String, String> {
+        let mut path = config_dir();
+        path.push("config.json");
+        let file = OpenOptions::new().read(true).open(path);
+        match file {
+            Ok(file) => {
+                let reader = BufReader::new(file);
+                let builder: CrawlerBuilder = serde_json::from_reader(reader).unwrap();
+                let mut hm = HashMap::new();
+                hm.insert("uuid".to_owned(), builder.uuid.unwrap());
+                hm.insert("cookie".to_owned(), builder.cookie.unwrap());
+                hm.insert("path".to_owned(), builder.path.unwrap_or("".to_owned()));
+                hm.insert("proxy".to_owned(), builder.proxy.unwrap_or("".to_owned()));
+                hm
+            }
+            Err(_) => {
+                let mut hm = HashMap::new();
+                hm.insert("uuid".to_owned(), "".to_owned());
+                hm.insert("cookie".to_owned(), "".to_owned());
+                hm.insert("path".to_owned(), "".to_owned());
+                hm.insert("proxy".to_owned(), "".to_owned());
+                hm
+            }
+        }
     }
 }
 
@@ -311,5 +425,52 @@ mod tests {
             tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
             println!("{}", crawler.process());
         });
+    }
+
+    #[test]
+    fn build_test() {
+        let builder = Crawler::builder().uuid("1").cookie("2").path("").proxy("");
+        let crawler = builder.build();
+        assert_eq!(crawler.uuid, "1");
+        assert_eq!(crawler.cookie, "2");
+        assert_eq!(crawler.path, helper::download_dir() + "/1");
+        assert!(crawler.proxy.is_none());
+        let builder = Crawler::builder()
+            .uuid("1")
+            .cookie("2")
+            .path("E://picture")
+            .proxy("http://127.0.0.1:7890");
+        let crawler = builder.build();
+        assert_eq!(crawler.uuid, "1");
+        assert_eq!(crawler.cookie, "2");
+        assert_eq!(crawler.path, "E://picture/1");
+        assert!(crawler.proxy.is_some());
+    }
+
+    #[test]
+    fn save_load_config() {
+        let builder = Crawler::builder().uuid("1").cookie("2").path("").proxy("");
+        helper::store_builder(&builder);
+        let config = helper::get_config();
+        let mut expect = std::collections::HashMap::new();
+        expect.insert("uuid".to_owned(), "1".to_owned());
+        expect.insert("cookie".to_owned(), "2".to_owned());
+        expect.insert("path".to_owned(), "".to_owned());
+        expect.insert("proxy".to_owned(), "".to_owned());
+        assert_eq!(config, expect);
+
+        let builder = Crawler::builder()
+            .uuid("1")
+            .cookie("2")
+            .path("D://")
+            .proxy("http://127.0.0.1:7890");
+        helper::store_builder(&builder);
+        let config = helper::get_config();
+        let mut expect = std::collections::HashMap::new();
+        expect.insert("uuid".to_owned(), "1".to_owned());
+        expect.insert("cookie".to_owned(), "2".to_owned());
+        expect.insert("path".to_owned(), "D://".to_owned());
+        expect.insert("proxy".to_owned(), "http://127.0.0.1:7890".to_owned());
+        assert_eq!(config, expect);
     }
 }
