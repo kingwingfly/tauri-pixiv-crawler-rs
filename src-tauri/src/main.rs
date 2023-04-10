@@ -5,7 +5,6 @@
 use once_cell::sync::OnceCell;
 use pixiv_crawler::helper;
 use pixiv_crawler::Crawler;
-use tauri::api::path;
 
 static mut CRAWLER: OnceCell<Crawler> = OnceCell::new();
 
@@ -35,7 +34,12 @@ fn process() -> String {
 
 #[tauri::command]
 fn download_dir() -> String {
-    path::download_dir().unwrap().to_str().unwrap().to_owned()
+    helper::download_dir()
+}
+
+#[tauri::command]
+fn save_path() -> String {
+    unsafe { CRAWLER.get().unwrap().save_path() }
 }
 
 fn main() {
@@ -44,7 +48,8 @@ fn main() {
             go,
             interrupt,
             process,
-            download_dir
+            download_dir,
+            save_path,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
