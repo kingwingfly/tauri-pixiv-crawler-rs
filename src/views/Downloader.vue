@@ -67,10 +67,10 @@ init()
     <label>Cookie:</label>
     <input id="cookie-input" v-model="cookie" placeholder="Enter your cookie" />
     <br>
-    <label>Save path:</label>
+    <label>Save path (Optional):</label>
     <input id="path-input" v-model="path" placeholder="Enter your path" />
     <br>
-    <label>Proxy:</label>
+    <label>Proxy (Optional):</label>
     <input id="proxy-input" v-model="proxy" placeholder="Enter your proxy" />
     <br>
     <div>

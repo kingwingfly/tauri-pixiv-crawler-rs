@@ -207,22 +207,26 @@ impl CrawlerBuilder {
     }
 
     pub fn uuid(mut self, uuid: &str) -> Self {
-        self.uuid = Some(uuid.to_owned());
+        self.uuid = Some(uuid.trim().to_owned());
         self
     }
 
     pub fn cookie(mut self, cookie: &str) -> Self {
-        self.cookie = Some(cookie.to_owned());
+        self.cookie = Some(cookie.trim().to_owned());
         self
     }
 
     pub fn path(mut self, path: &str) -> Self {
-        self.path = Some(path.to_owned());
+        let path = match path.trim() {
+            "" => helper::download_dir(),
+            _ => path.trim().to_owned(),
+        };
+        self.path = Some(path.trim().to_owned());
         self
     }
 
     pub fn proxy(mut self, proxy: &str) -> Self {
-        self.proxy = Some(proxy.to_owned());
+        self.proxy = Some(proxy.trim().to_owned());
         self
     }
 }
@@ -308,7 +312,7 @@ pub mod helper {
     use reqwest::{Client, Proxy};
     use std::collections::HashMap;
     use std::fs::{self, OpenOptions};
-    use std::io::{BufReader, Read, Write};
+    use std::io::{BufReader, Write};
     use tauri::api::path;
 
     pub fn create_rt() -> tokio::runtime::Runtime {
