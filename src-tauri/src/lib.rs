@@ -74,16 +74,30 @@ impl Crawler {
         let resp = client.get(&url).send().await?;
         let content = resp.text().await?;
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
-        let illus: Vec<String> = v
+        let illus = v
             .get("body")
-            .unwrap()
-            .get("illusts")
-            .unwrap()
-            .as_object()
-            .unwrap()
-            .keys()
-            .map(|k| k.to_string())
-            .collect();
+            .and_then(|v| v.get("illusts"))
+            .and_then(|v| {
+                Some(
+                    v.as_object()
+                        .unwrap()
+                        .keys()
+                        .map(|k| k.to_string())
+                        .collect(),
+                )
+            })
+            .unwrap_or(Vec::new());
+
+        // v
+        //     .get("body")
+        //     .unwrap()
+        //     .get("illusts")
+        //     .unwrap()
+        //     .as_object()
+        //     .unwrap()
+        //     .keys()
+        //     .map(|k| k.to_string())
+        //     .collect();
         Ok(illus)
     }
 
