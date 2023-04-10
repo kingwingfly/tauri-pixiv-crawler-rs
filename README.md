@@ -90,7 +90,7 @@ Here are advantages:
 <!-- GETTING STARTED -->
 ## Getting Started
 
-You can compile by yourself.
+You can compile by yourself, or just got release [here](https://github.com/kingwingfly/tauri-pixiv-crawler-rs/releases).
 
 ### Prerequisites
 
@@ -230,7 +230,7 @@ Some document may help in develop tauri app and crawler.
 [Rust-url]: https://github.com/rust-lang/rust
 [TauriLogo]: https://github.com/tauri-apps/tauri/blob/dev/.github/splash.png?raw=true
 [Tauri-url]:https://github.com/tauri-apps/tauri
-[TokioLogo]: https://tokio.rs/img/tokio-horizontal.svg
+[TokioLogo]: https://img.shields.io/badge/Rust-Tokio-orange
 [Tokio-url]: https://tokio.rs
 [Vue.js]: https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
 [Vue-url]: https://vuejs.org/
