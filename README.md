@@ -148,7 +148,8 @@ You may don't need a proxy, however the proxy is must by v0.0.1 version.
 - [x] Tokio simultaneous
 - [x] Return progress in real time
 - [x] Interrupt and restart
-- [ ] Run without proxy
+- [x] Run without proxy
+- [ ] Download a set of jobs in one go
 
 See the [open issues](https://github.com/kingwingfly/tauri-pixiv-crawler-rs/issues) for a full list of proposed features (and known issues).
 
