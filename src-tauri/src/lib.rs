@@ -26,7 +26,7 @@ impl Crawler {
             "" => helper::download_dir(),
             _ => path.trim().to_owned(),
         };
-        let path = format!("{}/{}", path, uuid);
+        let path = format!("{}/{}", path, uuid.trim());
         let tk_mng = TaskMng::new();
         Self {
             uuid: uuid.trim().into(),
