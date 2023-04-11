@@ -347,7 +347,7 @@ pub mod helper {
         path::download_dir().unwrap().to_str().unwrap().to_owned()
     }
 
-    fn config_dir() -> std::path::PathBuf {
+    pub fn config_dir() -> std::path::PathBuf {
         let mut path = path::config_dir().unwrap();
         path.push("PixivCrawler");
         fs::create_dir_all(&path).unwrap();
@@ -374,21 +374,18 @@ pub mod helper {
         match file {
             Ok(file) => {
                 let reader = BufReader::new(file);
-                let builder: CrawlerBuilder = serde_json::from_reader(reader).unwrap();
-                let mut hm = HashMap::new();
-                hm.insert("uuid".to_owned(), builder.uuid.unwrap());
-                hm.insert("cookie".to_owned(), builder.cookie.unwrap());
-                hm.insert("path".to_owned(), builder.path.unwrap_or("".to_owned()));
-                hm.insert("proxy".to_owned(), builder.proxy.unwrap_or("".to_owned()));
-                hm
+                serde_json::from_reader(reader).unwrap()
             }
             Err(_) => {
-                let mut hm = HashMap::new();
-                hm.insert("uuid".to_owned(), "".to_owned());
-                hm.insert("cookie".to_owned(), "".to_owned());
-                hm.insert("path".to_owned(), "".to_owned());
-                hm.insert("proxy".to_owned(), "".to_owned());
-                hm
+                let json = r#"
+                {
+                    "uuid": "",
+                    "cookie": "",
+                    "path": "",
+                    "proxy": ""
+                }
+                "#;
+                serde_json::from_str(json).unwrap()
             }
         }
     }
@@ -463,16 +460,46 @@ mod tests {
 
     #[test]
     fn save_load_config() {
+        // back up the config
+        use std::io::{Read, Write};
+        let mut path = helper::config_dir();
+        path.push("config.json");
+        let mut bak = String::new();
+        match std::fs::File::open(&path) {
+            Ok(mut file) => {
+                file.read_to_string(&mut bak).unwrap();
+            }
+            Err(_) => {}
+        };
+        std::fs::remove_file(&path).unwrap_or(());
+
+        // No config test
+        let config = helper::get_config();
+        let expexcted = serde_json::from_str(
+            r#"
+            {
+                "uuid": "",
+                "cookie": "",
+                "path": "",
+                "proxy": ""
+            }
+        "#,
+        )
+        .unwrap();
+        assert_eq!(config, expexcted);
+
+        // No path test; Default path expected
         let builder = Crawler::builder().uuid("1").cookie("2").path("").proxy("");
         helper::store_builder(&builder);
         let config = helper::get_config();
         let mut expect = std::collections::HashMap::new();
         expect.insert("uuid".to_owned(), "1".to_owned());
         expect.insert("cookie".to_owned(), "2".to_owned());
-        expect.insert("path".to_owned(), "".to_owned());
+        expect.insert("path".to_owned(), helper::download_dir());
         expect.insert("proxy".to_owned(), "".to_owned());
         assert_eq!(config, expect);
 
+        // regular situation test;
         let builder = Crawler::builder()
             .uuid("1")
             .cookie("2")
@@ -486,5 +513,18 @@ mod tests {
         expect.insert("path".to_owned(), "D://".to_owned());
         expect.insert("proxy".to_owned(), "http://127.0.0.1:7890".to_owned());
         assert_eq!(config, expect);
+
+        // revert the config after test
+        match std::fs::OpenOptions::new()
+            .truncate(true)
+            .write(true)
+            .create(true)
+            .open(path)
+        {
+            Ok(mut file) => {
+                file.write_all(bak.as_bytes()).unwrap();
+            }
+            Err(_) => {}
+        }
     }
 }

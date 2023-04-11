@@ -47,12 +47,14 @@ async function interrupt() {
 
 
 async function init() {
-  path.value = await invoke("download_dir");
   let hm: { [key: string]: string } = await invoke("get_cached_config");
   uuid.value = hm["uuid"];
   cookie.value = hm["cookie"];
   path.value = hm["path"];
   proxy.value = hm["proxy"];
+  if (!path.value) {
+    path.value = await invoke("download_dir");
+  }
 }
 
 init()
