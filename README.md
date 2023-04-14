@@ -187,7 +187,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Louis - [@email](20200581@cqu.edu.cn) - email@example.com
+Louis - [@email](20200581@cqu.edu.cn) - 20200581@cqu.edu.cn
 
 Project Link: [https://github.com/kingwingfly/tauri-pixiv-crawler-rs](https://github.com/kingwingfly/tauri-pixiv-crawler-rs)
 
