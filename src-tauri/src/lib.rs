@@ -323,10 +323,11 @@ impl TaskMng {
 
 pub mod helper {
     use super::CrawlerBuilder;
+    use keyring::Entry;
     use reqwest::{Client, Proxy};
     use std::collections::HashMap;
-    use std::fs::{self, OpenOptions};
-    use std::io::{BufReader, Write};
+    use std::env;
+    use std::fs;
     use tauri::api::path;
 
     pub fn create_rt() -> tokio::runtime::Runtime {
@@ -357,25 +358,31 @@ pub mod helper {
     pub fn store_builder(builder: &CrawlerBuilder) {
         let mut path = config_dir();
         path.push("config.json");
-        let json = serde_json::to_string_pretty(&builder).unwrap();
-        let mut file = OpenOptions::new()
-            .create(true)
-            .write(true)
-            .truncate(true)
-            .open(path)
-            .unwrap();
-        file.write(json.as_bytes()).unwrap();
+        let json = serde_json::to_string(&builder).unwrap();
+        let user = match env::var("USERNAME") {
+            Ok(user) => user,
+            Err(_) => env::var("USER").unwrap(),
+        };
+        let entry = Entry::new("pixiv_downloader", &user).unwrap();
+        entry.set_password(&json).unwrap();
+
+        // let mut file = OpenOptions::new()
+        //     .create(true)
+        //     .write(true)
+        //     .truncate(true)
+        //     .open(path)
+        //     .unwrap();
+        // file.write(json.as_bytes()).unwrap();
     }
 
     pub fn get_config() -> HashMap<String, String> {
-        let mut path = config_dir();
-        path.push("config.json");
-        let file = OpenOptions::new().read(true).open(path);
-        match file {
-            Ok(file) => {
-                let reader = BufReader::new(file);
-                serde_json::from_reader(reader).unwrap()
-            }
+        let user = match env::var("USERNAME") {
+            Ok(user) => user,
+            Err(_) => env::var("USER").unwrap(),
+        };
+        let entry = Entry::new("pixiv_downloader", &user).unwrap();
+        match entry.get_password() {
+            Ok(config) => serde_json::from_str(&config).unwrap(),
             Err(_) => {
                 let json = r#"
                 {
@@ -461,17 +468,13 @@ mod tests {
     #[test]
     fn save_load_config() {
         // back up the config
-        use std::io::{Read, Write};
-        let mut path = helper::config_dir();
-        path.push("config.json");
-        let mut bak = String::new();
-        match std::fs::File::open(&path) {
-            Ok(mut file) => {
-                file.read_to_string(&mut bak).unwrap();
-            }
-            Err(_) => {}
+        let bak = helper::get_config();
+        let user = match std::env::var("USERNAME") {
+            Ok(user) => user,
+            Err(_) => std::env::var("USER").unwrap(),
         };
-        std::fs::remove_file(&path).unwrap_or(());
+        let entry = keyring::Entry::new("pixiv_downloader", &user).unwrap();
+        entry.delete_password().unwrap();
 
         // No config test
         let config = helper::get_config();
@@ -515,16 +518,9 @@ mod tests {
         assert_eq!(config, expect);
 
         // revert the config after test
-        match std::fs::OpenOptions::new()
-            .truncate(true)
-            .write(true)
-            .create(true)
-            .open(path)
-        {
-            Ok(mut file) => {
-                file.write_all(bak.as_bytes()).unwrap();
-            }
-            Err(_) => {}
-        }
+        entry.delete_password().unwrap();
+        entry
+            .set_password(&serde_json::to_string(&bak).unwrap())
+            .unwrap();
     }
 }
