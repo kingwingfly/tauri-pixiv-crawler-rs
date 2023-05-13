@@ -76,16 +76,11 @@ impl Crawler {
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         let illus = v
             .get("body")
-            .and_then(|v| v.get("illusts"))
-            .and_then(|v| {
-                Some(
-                    v.as_object()
+            .and_then(|v| v.get("illusts")).map(|v| v.as_object()
                         .unwrap()
                         .keys()
                         .map(|k| k.to_string())
-                        .collect(),
-                )
-            })
+                        .collect())
             .unwrap_or(Vec::new());
 
         // v
